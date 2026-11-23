@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="PESDUL'S app icon">
+  <rect width="128" height="128" rx="34" fill="#FFF4E6"/>
+  <circle cx="64" cy="64" r="45" fill="#E4572E"/>
+  <path d="M39 39h12v31c0 8 5 13 13 13s13-5 13-13V39h12v31c0 14-9 25-21 28v13H60V98c-12-3-21-14-21-28V39z" fill="#FFF4E6"/>
+  <path d="M82 76l9 9 17-20" fill="none" stroke="#FFF4E6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

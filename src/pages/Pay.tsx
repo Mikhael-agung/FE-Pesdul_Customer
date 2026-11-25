@@ -1,68 +1,89 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { QRCodeSVG } from 'qrcode.react';
-import { Countdown } from '../components/Countdown';
-import { useOrder } from '../hooks/useOrder';
-import { usePaymentStatus } from '../hooks/usePaymentStatus';
-import { api, parseError } from '../lib/api';
-import { rupiah } from '../lib/format';
-import type { Order } from '../lib/types';
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { QRCodeSVG } from "qrcode.react";
+import { Countdown } from "../components/Countdown";
+import { useOrder } from "../hooks/useOrder";
+import { usePaymentStatus } from "../hooks/usePaymentStatus";
+import { api, parseError } from "../lib/api";
+import { rupiah } from "../lib/format";
+import type { Order } from "../lib/types";
 
 export default function Pay() {
-  const { code = '' } = useParams();
+  const { code = "" } = useParams();
   const nav = useNavigate();
   const qc = useQueryClient();
   const order = useOrder(code);
-  const pending = order.data?.status === 'pending_payment';
+  const pending = order.data?.status === "pending_payment";
   const status = usePaymentStatus(code, !!pending);
-  const [msg, setMsg] = useState('');
+  const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
   // Status berubah dari polling: sinkronkan order, lalu pindah ke detail bila sudah dibayar.
   const os = status.data?.order_status;
   useEffect(() => {
-    if (!os || os === 'pending_payment') return;
-    qc.invalidateQueries({ queryKey: ['order', code] });
-    if (os === 'paid') nav(`/orders/${code}`, { replace: true });
+    if (!os || os === "pending_payment") return;
+    qc.invalidateQueries({ queryKey: ["order", code] });
+    if (os === "paid") nav(`/orders/${code}`, { replace: true });
   }, [os, code, nav, qc]);
 
-  if (order.isLoading) return <p className="py-10 text-center text-sm">Memuat...</p>;
+  if (order.isLoading)
+    return <p className="py-10 text-center text-sm">Memuat...</p>;
   if (order.isError || !order.data)
-    return <p className="py-10 text-center text-sm text-error">Pesanan tidak ditemukan.</p>;
+    return (
+      <p className="py-10 text-center text-sm text-error">
+        Pesanan tidak ditemukan.
+      </p>
+    );
 
   const o = order.data;
   const pay = status.data?.payment ?? o.payment;
 
-  if (o.status === 'expired')
+  if (o.status === "expired")
     return (
       <div className="mx-auto flex max-w-xl flex-col items-center gap-3 py-16 text-center">
-        <span className="icon text-error" style={{ fontSize: 56 }}>timer_off</span>
-        <h1 className="font-headline text-lg font-extrabold">Pesanan kedaluwarsa</h1>
-        <p className="text-sm text-on-surface-variant">Waktu pembayaran 15 menit habis. Silakan buat pesanan baru.</p>
-        <Link to="/" className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-on-primary">Kembali ke menu</Link>
+        <span className="icon text-error" style={{ fontSize: 56 }}>
+          timer_off
+        </span>
+        <h1 className="font-headline text-lg font-extrabold">
+          Pesanan kedaluwarsa
+        </h1>
+        <p className="text-sm text-on-surface-variant">
+          Waktu pembayaran 15 menit habis. Silakan buat pesanan baru.
+        </p>
+        <Link
+          to="/"
+          className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-on-primary"
+        >
+          Kembali ke menu
+        </Link>
       </div>
     );
 
   if (!pending)
     return (
       <div className="py-16 text-center">
-        <Link to={`/orders/${code}`} className="font-bold text-primary underline">Lihat pesanan</Link>
+        <Link
+          to={`/orders/${code}`}
+          className="font-bold text-primary underline"
+        >
+          Lihat pesanan
+        </Link>
       </div>
     );
 
-  const failed = pay && (pay.status === 'failed' || pay.status === 'expired');
+  const failed = pay && (pay.status === "failed" || pay.status === "expired");
 
   const retry = async () => {
     setBusy(true);
-    setMsg('');
+    setMsg("");
     try {
       const r = await api.post(`/orders/${code}/payment/retry`);
-      qc.setQueryData(['order', code], r.data.data as Order);
-      qc.invalidateQueries({ queryKey: ['pay-status', code] });
+      qc.setQueryData(["order", code], r.data.data as Order);
+      qc.invalidateQueries({ queryKey: ["pay-status", code] });
     } catch (e) {
       setMsg(parseError(e).message);
-      qc.invalidateQueries({ queryKey: ['order', code] });
+      qc.invalidateQueries({ queryKey: ["order", code] });
     } finally {
       setBusy(false);
     }
@@ -70,18 +91,27 @@ export default function Pay() {
 
   return (
     <div className="mx-auto max-w-md text-center">
-      <h1 className="font-headline text-xl font-extrabold">Bayar dengan QRIS</h1>
-      <p className="mt-1 text-xs text-on-surface-variant">Kode pesanan {o.code}</p>
+      <h1 className="font-headline text-xl font-extrabold">
+        Bayar dengan QRIS
+      </h1>
+      <p className="mt-1 text-xs text-on-surface-variant">
+        Kode pesanan {o.code}
+      </p>
 
       <div className="my-4 rounded-2xl bg-surface-container-lowest p-5 shadow-sm">
         <p className="text-xs text-on-surface-variant">Sisa waktu bayar</p>
         <p className="font-headline text-3xl font-extrabold">
-          <Countdown expiresAt={o.expires_at} onExpire={() => qc.invalidateQueries({ queryKey: ['order', code] })} />
+          <Countdown
+            expiresAt={o.expires_at}
+            onExpire={() => qc.invalidateQueries({ queryKey: ["order", code] })}
+          />
         </p>
 
         <div className="mx-auto my-4 flex w-fit rounded-xl bg-white p-3">
           {failed ? (
-            <div className="flex h-56 w-56 items-center justify-center text-sm text-error">Tagihan gagal/kedaluwarsa</div>
+            <div className="flex h-56 w-56 items-center justify-center text-sm text-error">
+              Tagihan gagal/kedaluwarsa
+            </div>
           ) : pay?.qr_string ? (
             <QRCodeSVG value={pay.qr_string} size={224} level="M" />
           ) : pay?.qr_url ? (
@@ -92,14 +122,53 @@ export default function Pay() {
         </div>
 
         <p className="text-xs text-on-surface-variant">Total</p>
-        <p className="font-headline text-xl font-extrabold">{rupiah(o.total)}</p>
+        <p className="font-headline text-xl font-extrabold">
+          {rupiah(o.total)}
+        </p>
+
+        {/* wajib hapus */} 
+        {import.meta.env.DEV && pay?.qr_url && (
+          <div className="mt-4 flex flex-col gap-2 border-t border-outline-variant pt-4 text-xs">
+            <p className="font-bold text-on-surface-variant">Mode sandbox</p>
+            <button
+              onClick={() => navigator.clipboard.writeText(pay.qr_url!)}
+              className="h-10 rounded-lg bg-surface-container-high font-semibold"
+            >
+              Salin URL QR
+            </button>
+            <a
+              href={pay.qr_url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-10 items-center justify-center rounded-lg bg-surface-container-high font-semibold"
+            >
+              Buka gambar QR
+            </a>
+            <a
+              href="https://simulator.sandbox.midtrans.com/v2/qris/index"
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-10 items-center justify-center rounded-lg bg-primary font-semibold text-on-primary"
+            >
+              Buka simulator Midtrans
+            </a>
+          </div>
+        )}
       </div>
 
-      {msg && <p className="mb-3 rounded-lg bg-error-container p-3 text-xs text-on-error-container">{msg}</p>}
+      {msg && (
+        <p className="mb-3 rounded-lg bg-error-container p-3 text-xs text-on-error-container">
+          {msg}
+        </p>
+      )}
 
       {failed ? (
-        <button onClick={retry} disabled={busy} className="h-12 w-full rounded-xl bg-primary font-headline font-bold text-on-primary disabled:opacity-60">
-          {busy ? 'Membuat ulang...' : 'Buat ulang tagihan'}
+        <button
+          onClick={retry}
+          disabled={busy}
+          className="h-12 w-full rounded-xl bg-primary font-headline font-bold text-on-primary disabled:opacity-60"
+        >
+          {busy ? "Membuat ulang..." : "Buat ulang tagihan"}
         </button>
       ) : (
         <button
@@ -107,10 +176,12 @@ export default function Pay() {
           disabled={status.isFetching}
           className="h-12 w-full rounded-xl bg-primary font-headline font-bold text-on-primary disabled:opacity-60"
         >
-          {status.isFetching ? 'Memeriksa...' : 'Cek status pembayaran'}
+          {status.isFetching ? "Memeriksa..." : "Cek status pembayaran"}
         </button>
       )}
-      <p className="mt-3 text-xs text-on-surface-variant">Status diperiksa otomatis tiap 5 detik.</p>
+      <p className="mt-3 text-xs text-on-surface-variant">
+        Status diperiksa otomatis tiap 5 detik.
+      </p>
     </div>
   );
 }

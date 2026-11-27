@@ -1,9 +1,15 @@
-import type { OrderStatus, OrderType } from './types';
+import type { OrderStatus, OrderType, PaymentMethod } from './types';
 
 const idr = new Intl.NumberFormat('id-ID');
 export const rupiah = (n: number) => `Rp ${idr.format(n)}`;
 
 export const typeLabel = (t: OrderType) => (t === 'dine_in' ? 'Makan di Tempat' : 'Bawa Pulang');
+
+export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
+  qris: 'QRIS',
+  cashier: 'Bayar di Kasir',
+  va: 'Virtual Account',
+};
 
 export const dateTime = (iso: string) =>
   new Date(iso).toLocaleString('id-ID', {

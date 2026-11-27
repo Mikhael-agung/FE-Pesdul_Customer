@@ -9,10 +9,12 @@ const menus = [
   { id: 3, name: 'Soto', price: 20000, image_url: '', category: { id: 1, name: 'Makanan' }, has_spice_level: false, spice_levels: [], stock_remaining: 0, is_available: false },
 ];
 
-async function mockApi(page: Page, opts: { dineInFull?: boolean } = {}) {
+type Opts = { dineInFull?: boolean; method?: 'qris' | 'cashier'; methods?: object[] };
+
+async function mockApi(page: Page, opts: Opts = {}) {
   let polls = 0;
   const order = (status: string, extra: object = {}) => ({
-    code: 'PSD-261123-0001', order_type: 'takeaway', status, status_label: status, total: 55000,
+        code: 'PSD-261123-0001', order_type: 'takeaway', payment_method: opts.method ?? 'qris', status,
     items: [
       { menu_id: 1, name: 'Nasi Goreng', qty: 2, unit_price: 25000, spice_level: 2, note: null },
       { menu_id: 2, name: 'Es Teh', qty: 1, unit_price: 5000, spice_level: null, note: null },

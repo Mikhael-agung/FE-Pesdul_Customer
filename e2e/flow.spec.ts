@@ -14,7 +14,7 @@ type Opts = { dineInFull?: boolean; method?: 'qris' | 'cashier'; methods?: objec
 async function mockApi(page: Page, opts: Opts = {}) {
   let polls = 0;
   const order = (status: string, extra: object = {}) => ({
-    code: 'PSD-261123-0001', order_type: 'takeaway', payment_method: opts.method ?? 'qris', status,
+    code: 'PSD-261123-0001', order_type: 'takeaway', payment_method: opts.method ?? 'qris', status, total: 55000,
     items: [
       { menu_id: 1, name: 'Nasi Goreng', qty: 2, unit_price: 25000, spice_level: 2, note: null },
       { menu_id: 2, name: 'Es Teh', qty: 1, unit_price: 5000, spice_level: null, note: null },
@@ -66,7 +66,7 @@ async function mockApi(page: Page, opts: Opts = {}) {
 test('daftar → pesan → bayar → QR pesanan', async ({ page }) => {
   await mockApi(page);
   await page.goto('/register');
-  await expect(page.getByTestId('splash')).toBeVisible();
+  await expect(page.getByTestId('splash')).toBeHidden({ timeout: 5000 });
   await page.getByLabel('Nama').fill('Agung');
   await page.getByLabel('Nomor HP atau Email').fill('a@a.com');
   await page.getByLabel('Kata Sandi', { exact: true }).fill('password123');

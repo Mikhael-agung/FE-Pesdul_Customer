@@ -12,49 +12,71 @@
 # Error details
 
 ```
-Error: expect(locator).toBeVisible() failed
+Test timeout of 30000ms exceeded.
+```
 
-Locator: getByTestId('splash')
-Expected: visible
-Timeout: 5000ms
-Error: element(s) not found
-
+```
+Error: page.goto: Test timeout of 30000ms exceeded.
 Call log:
-  - Expect "toBeVisible" getByTestId('splash') with timeout 5000ms
-  - waiting for getByTestId('splash')
+  - navigating to "http://localhost:5173/register", waiting until "load"
 
 ```
 
+# Page snapshot
+
 ```yaml
-- main:
-  - heading "PESDUL'S" [level=1]
-  - paragraph: Pesan Dulu Bebas Antre
-  - link "login Masuk":
-    - /url: /login
-  - link "person_add Daftar":
-    - /url: /register
-  - heading "Buat Akun Baru" [level=2]
-  - paragraph: Daftar sekali, pesan tanpa antre kapan saja.
-  - text: Nama person
-  - textbox "Nama":
-    - /placeholder: Nama lengkap
-  - text: Nomor HP atau Email alternate_email
-  - textbox "Nomor HP atau Email":
-    - /placeholder: 08123456789 atau email@domain.com
-  - text: Kata Sandi lock
-  - textbox "Kata Sandi":
-    - /placeholder: Minimal 8 karakter
-  - button "Tampilkan sandi": visibility
-  - text: Ulangi Kata Sandi lock
-  - textbox "Ulangi Kata Sandi":
-    - /placeholder: Ketik ulang kata sandi
-  - button "Tampilkan sandi": visibility
-  - button "Daftar Sekarang"
-  - text: atau masuk lebih cepat dengan
-  - button "Lanjutkan dengan Google. Dibuka di tab baru":
-    - img
-    - text: Lanjutkan dengan Google
-  - iframe
+- main [ref=e4]:
+  - generic [ref=e5]:
+    - heading "PESDUL'S" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Pesan Dulu Bebas Antre
+  - generic [ref=e8]:
+    - link "login Masuk" [ref=e9] [cursor=pointer]:
+      - /url: /login
+      - generic [ref=e10]: login
+      - text: Masuk
+    - link "person_add Daftar" [ref=e11] [cursor=pointer]:
+      - /url: /register
+      - generic [ref=e12]: person_add
+      - text: Daftar
+  - generic [ref=e13]:
+    - heading "Buat Akun Baru" [level=2] [ref=e14]
+    - paragraph [ref=e15]: Daftar sekali, pesan tanpa antre kapan saja.
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]: Nama
+        - generic [ref=e19]:
+          - generic: person
+          - textbox "Nama" [ref=e20]:
+            - /placeholder: Nama lengkap
+      - generic [ref=e21]:
+        - generic [ref=e22]: Nomor HP atau Email
+        - generic [ref=e23]:
+          - generic: alternate_email
+          - textbox "Nomor HP atau Email" [ref=e24]:
+            - /placeholder: 08123456789 atau email@domain.com
+      - generic [ref=e25]:
+        - generic [ref=e26]: Kata Sandi
+        - generic [ref=e27]:
+          - generic: lock
+          - textbox "Kata Sandi" [ref=e28]:
+            - /placeholder: Minimal 8 karakter
+          - button "Tampilkan sandi" [ref=e29]:
+            - generic [ref=e30]: visibility
+      - generic [ref=e31]:
+        - generic [ref=e32]: Ulangi Kata Sandi
+        - generic [ref=e33]:
+          - generic: lock
+          - textbox "Ulangi Kata Sandi" [ref=e34]:
+            - /placeholder: Ketik ulang kata sandi
+          - button "Tampilkan sandi" [ref=e35]:
+            - generic [ref=e36]: visibility
+      - button "Daftar Sekarang" [ref=e37]
+      - generic [ref=e38]:
+        - generic [ref=e39]: atau masuk lebih cepat dengan
+        - generic [ref=e43]:
+          - button "Lanjutkan dengan Google. Dibuka di tab baru" [ref=e45] [cursor=pointer]:
+            - generic [ref=e47]: Lanjutkan dengan Google
+          - iframe
 ```
 
 # Test source
@@ -76,7 +98,7 @@ Call log:
   14  | async function mockApi(page: Page, opts: Opts = {}) {
   15  |   let polls = 0;
   16  |   const order = (status: string, extra: object = {}) => ({
-  17  |     code: 'PSD-261123-0001', order_type: 'takeaway', payment_method: opts.method ?? 'qris', status,
+  17  |     code: 'PSD-261123-0001', order_type: 'takeaway', payment_method: opts.method ?? 'qris', status, total: 55000,
   18  |     items: [
   19  |       { menu_id: 1, name: 'Nasi Goreng', qty: 2, unit_price: 25000, spice_level: 2, note: null },
   20  |       { menu_id: 2, name: 'Es Teh', qty: 1, unit_price: 5000, spice_level: null, note: null },
@@ -127,9 +149,9 @@ Call log:
   65  | 
   66  | test('daftar → pesan → bayar → QR pesanan', async ({ page }) => {
   67  |   await mockApi(page);
-  68  |   await page.goto('/register');
-> 69  |   await expect(page.getByTestId('splash')).toBeVisible();
-      |                                            ^ Error: expect(locator).toBeVisible() failed
+> 68  |   await page.goto('/register');
+      |              ^ Error: page.goto: Test timeout of 30000ms exceeded.
+  69  |   await expect(page.getByTestId('splash')).toBeHidden({ timeout: 5000 });
   70  |   await page.getByLabel('Nama').fill('Agung');
   71  |   await page.getByLabel('Nomor HP atau Email').fill('a@a.com');
   72  |   await page.getByLabel('Kata Sandi', { exact: true }).fill('password123');

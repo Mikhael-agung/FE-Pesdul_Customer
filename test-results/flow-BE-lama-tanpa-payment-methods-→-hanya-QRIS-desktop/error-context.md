@@ -6,119 +6,68 @@
 
 # Test info
 
-- Name: flow.spec.ts >> daftar → pesan → bayar → QR pesanan
-- Location: e2e/flow.spec.ts:66:1
+- Name: flow.spec.ts >> BE lama tanpa payment_methods → hanya QRIS
+- Location: e2e/flow.spec.ts:156:1
 
 # Error details
 
 ```
-Error: expect(locator).toBeVisible() failed
+Test timeout of 30000ms exceeded.
+```
 
-Locator: getByTestId('splash')
-Expected: visible
-Timeout: 5000ms
-Error: element(s) not found
-
+```
+Error: page.goto: Test timeout of 30000ms exceeded.
 Call log:
-  - Expect "toBeVisible" getByTestId('splash') with timeout 5000ms
-  - waiting for getByTestId('splash')
+  - navigating to "http://localhost:5173/checkout/type", waiting until "load"
 
 ```
 
+# Page snapshot
+
 ```yaml
-- main:
-  - heading "PESDUL'S" [level=1]
-  - paragraph: Pesan Dulu Bebas Antre
-  - link "login Masuk":
-    - /url: /login
-  - link "person_add Daftar":
-    - /url: /register
-  - heading "Buat Akun Baru" [level=2]
-  - paragraph: Daftar sekali, pesan tanpa antre kapan saja.
-  - text: Nama person
-  - textbox "Nama":
-    - /placeholder: Nama lengkap
-  - text: Nomor HP atau Email alternate_email
-  - textbox "Nomor HP atau Email":
-    - /placeholder: 08123456789 atau email@domain.com
-  - text: Kata Sandi lock
-  - textbox "Kata Sandi":
-    - /placeholder: Minimal 8 karakter
-  - button "Tampilkan sandi": visibility
-  - text: Ulangi Kata Sandi lock
-  - textbox "Ulangi Kata Sandi":
-    - /placeholder: Ketik ulang kata sandi
-  - button "Tampilkan sandi": visibility
-  - button "Daftar Sekarang"
-  - text: atau masuk lebih cepat dengan
-  - button "Lanjutkan dengan Google. Dibuka di tab baru":
-    - img
-    - text: Lanjutkan dengan Google
-  - iframe
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "PESDUL'S" [ref=e6] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e8]:
+        - link "restaurant_menu Menu" [ref=e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e10]: restaurant_menu
+          - text: Menu
+        - link "receipt_long Pesanan" [ref=e11] [cursor=pointer]:
+          - /url: /orders
+          - generic [ref=e12]: receipt_long
+          - text: Pesanan
+        - link "shopping_cart Keranjang 1" [ref=e13] [cursor=pointer]:
+          - /url: /cart
+          - generic [ref=e14]: shopping_cart
+          - text: Keranjang
+          - generic [ref=e15]: "1"
+      - generic [ref=e16]:
+        - generic [ref=e17]: Agung
+        - button "Keluar" [ref=e18]:
+          - generic [ref=e19]: logout
+  - main [ref=e20]:
+    - generic [ref=e21]:
+      - heading "Pilih Tipe Pesanan" [level=1] [ref=e22]
+      - paragraph [ref=e23]: Tipe masih bisa diganti setelah bayar, sebelum pesanan dimasak.
+      - generic [ref=e24]:
+        - button "restaurant Makan di Tempat Makan langsung di restoran." [ref=e25]:
+          - generic [ref=e26]: restaurant
+          - generic [ref=e28]:
+            - generic [ref=e29]: Makan di Tempat
+            - text: Makan langsung di restoran.
+        - button "takeout_dining Bawa Pulang Ambil pesanan, makan di mana saja." [ref=e30]:
+          - generic [ref=e31]: takeout_dining
+          - generic [ref=e33]:
+            - generic [ref=e34]: Bawa Pulang
+            - text: Ambil pesanan, makan di mana saja.
 ```
 
 # Test source
 
 ```ts
-  1   | import { expect, test, type Page } from '@playwright/test';
-  2   | 
-  3   | const API = '**/api/v1';
-  4   | const ok = (data: unknown, status = 200) => ({ status, json: { data } });
-  5   | 
-  6   | const menus = [
-  7   |   { id: 1, name: 'Nasi Goreng', price: 25000, image_url: '', category: { id: 1, name: 'Makanan' }, has_spice_level: true, spice_levels: [1, 2, 3], stock_remaining: 20, is_available: true },
-  8   |   { id: 2, name: 'Es Teh', price: 5000, image_url: '', category: { id: 2, name: 'Minuman' }, has_spice_level: false, spice_levels: [], stock_remaining: 3, is_available: true },
-  9   |   { id: 3, name: 'Soto', price: 20000, image_url: '', category: { id: 1, name: 'Makanan' }, has_spice_level: false, spice_levels: [], stock_remaining: 0, is_available: false },
-  10  | ];
-  11  | 
-  12  | type Opts = { dineInFull?: boolean; method?: 'qris' | 'cashier'; methods?: object[] };
-  13  | 
-  14  | async function mockApi(page: Page, opts: Opts = {}) {
-  15  |   let polls = 0;
-  16  |   const order = (status: string, extra: object = {}) => ({
-  17  |     code: 'PSD-261123-0001', order_type: 'takeaway', payment_method: opts.method ?? 'qris', status,
-  18  |     items: [
-  19  |       { menu_id: 1, name: 'Nasi Goreng', qty: 2, unit_price: 25000, spice_level: 2, note: null },
-  20  |       { menu_id: 2, name: 'Es Teh', qty: 1, unit_price: 5000, spice_level: null, note: null },
-  21  |     ],
-  22  |     qr_token: qrFor(status),
-  23  |     estimate_minutes: null, can_change_type: status === 'paid' || (opts.method === 'cashier' && status === 'pending_payment'), type_logs: [],
-  24  |     payment: { status: status === 'pending_payment' ? 'pending' : 'paid', gross_amount: 55000, qr_string: '000201QRIS', qr_url: null, expires_at: new Date(Date.now() + 15 * 60_000).toISOString() },
-  25  |     created_at: new Date().toISOString(), expires_at: new Date(Date.now() + 15 * 60_000).toISOString(), ...extra,
-  26  |   });
-  27  |   let current = 'pending_payment';
-  28  | 
-  29  |   const qrFor = (s: string) => s === 'paid' || (opts.method === 'cashier' && s === 'pending_payment') ? opts.method === 'cashier' ? 'TOKEN-CASH' : 'TOKEN-ABC' : null;
-  30  | 
-  31  |   await page.route(`${API}/auth/register`, (r) => r.fulfill({ status: 201, json: { data: { user: { id: 1, name: 'Agung', identifier: 'a@a.com' }, token: 't' } } }));
-  32  |   await page.route(`${API}/auth/me`, (r) => r.fulfill(ok({ id: 1, name: 'Agung', identifier: 'a@a.com' })));
-  33  |   await page.route(`${API}/categories`, (r) => r.fulfill(ok([{ id: 1, name: 'Makanan' }, { id: 2, name: 'Minuman' }])));
-  34  |   await page.route(`${API}/menus**`, (r) => r.fulfill(ok(menus)));
-  35  |   await page.route(`${API}/settings/public`, (r) => r.fulfill(ok({
-  36  |     dine_in_full: !!opts.dineInFull,
-  37  |     payment_methods: opts.methods ?? [
-  38  |       { id: 'qris', label: 'QRIS', enabled: true },
-  39  |       { id: 'cashier', label: 'Bayar di Kasir', enabled: true },
-  40  |       { id: 'va', label: 'Virtual Account', enabled: false },
-  41  |     ],
-  42  |   })));
-  43  |   await page.route(`${API}/cart/validate`, async (r) => {
-  44  |     const items = r.request().postDataJSON().items as { menu_id: number; qty: number }[];
-  45  |     const price: Record<number, number> = { 1: 25000, 2: 5000 };
-  46  |     await r.fulfill(ok({ valid: true, total: items.reduce((s, i) => s + price[i.menu_id] * i.qty, 0), items: items.map((i) => ({ menu_id: i.menu_id, unit_price: price[i.menu_id], qty: i.qty, available: true, stock_remaining: 10 })) }));
-  47  |   });
-  48  |   await page.route(`${API}/orders`, (r) => {
-  49  |     if (r.request().method() === 'POST') {
-  50  |       const body = r.request().postDataJSON();
-  51  |       expect(body.order_type).toBe('takeaway');
-  52  |       expect(body.payment_method).toBe(opts.method ?? 'qris');
-  53  |       const extra = opts.method === 'cashier' ? { qr_token: 'TOKEN-CASH', payment: null } : {};
-  54  |       return r.fulfill(ok(order('pending_payment', extra), 201));
-  55  |     }
-  56  |     return r.fulfill({ json: { data: [], meta: { current_page: 1, per_page: 10, total: 0, last_page: 1 } } });
-  57  |   });
-  58  |   await page.route(`${API}/orders/PSD-261123-0001`, (r) => r.fulfill(ok(order(current))));
-  59  |   await page.route(`${API}/orders/PSD-261123-0001/payment/status`, (r) => {
   60  |     polls++;
   61  |     if (polls >= 2) current = 'paid'; // "settlement" setelah poll ke-2
   62  |     return r.fulfill(ok({ order_status: current, payment: order(current).payment }));
@@ -128,8 +77,7 @@ Call log:
   66  | test('daftar → pesan → bayar → QR pesanan', async ({ page }) => {
   67  |   await mockApi(page);
   68  |   await page.goto('/register');
-> 69  |   await expect(page.getByTestId('splash')).toBeVisible();
-      |                                            ^ Error: expect(locator).toBeVisible() failed
+  69  |   await expect(page.getByTestId('splash')).toBeHidden({ timeout: 5000 });
   70  |   await page.getByLabel('Nama').fill('Agung');
   71  |   await page.getByLabel('Nomor HP atau Email').fill('a@a.com');
   72  |   await page.getByLabel('Kata Sandi', { exact: true }).fill('password123');
@@ -220,7 +168,8 @@ Call log:
   157 |   await mockApi(page);
   158 |   await page.route('**/api/v1/settings/public', (r) => r.fulfill(ok({ dine_in_full: false })));
   159 |   await page.addInitScript(seedCart);
-  160 |   await page.goto('/checkout/type');
+> 160 |   await page.goto('/checkout/type');
+      |              ^ Error: page.goto: Test timeout of 30000ms exceeded.
   161 |   await page.getByRole('button', { name: /Bawa Pulang/ }).click();
   162 |   await expect(page.getByRole('radio')).toHaveCount(1);
   163 |   await expect(page.getByRole('radio', { name: /QRIS/ })).toHaveAttribute('aria-checked', 'true');

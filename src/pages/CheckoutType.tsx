@@ -1,7 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useCart } from '../cart/CartContext';
-import { api } from '../lib/api';
+import { usePublicSettings } from '../hooks/usePublicSettings';
 import type { OrderType } from '../lib/types';
 
 const OPTS: { v: OrderType; icon: string; title: string; desc: string }[] = [
@@ -12,11 +11,7 @@ const OPTS: { v: OrderType; icon: string; title: string; desc: string }[] = [
 export default function CheckoutType() {
   const { lines, orderType, setOrderType } = useCart();
   const nav = useNavigate();
-  const settings = useQuery({
-    queryKey: ['settings-public'],
-    queryFn: async () => (await api.get('/settings/public')).data.data as { dine_in_full: boolean },
-  });
-  const full = settings.data?.dine_in_full ?? false;
+  const { dineInFull: full } = usePublicSettings();
 
   if (!lines.length) return <Navigate to="/cart" replace />;
 

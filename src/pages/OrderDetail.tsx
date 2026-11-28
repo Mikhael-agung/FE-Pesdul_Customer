@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
+import { Countdown } from '../components/Countdown';
 import { StatusBadge } from '../components/StatusBadge';
 import { useOrder } from '../hooks/useOrder';
 import { api, parseError } from '../lib/api';
@@ -47,6 +48,9 @@ export default function OrderDetail() {
   };
 
   const idx = STEPS.findIndex((s) => s.s === o.status);
+  // Bayar di kasir: pesanan belum dibayar tapi QR sudah terbit untuk discan.
+  const cashierPending = o.payment_method === 'cashier' && o.status === 'pending_payment';
+  const showQr = !!o.qr_token && (o.status === 'paid' || cashierPending);
 
   return (
     <div className="mx-auto max-w-xl pb-6">
@@ -55,16 +59,30 @@ export default function OrderDetail() {
           <h1 className="font-headline text-xl font-extrabold">{o.code}</h1>
           <p className="text-xs text-on-surface-variant">{dateTime(o.created_at)} · {typeLabel(o.order_type)}</p>
         </div>
-        <StatusBadge status={o.status} label={o.status_label} />
+        <StatusBadge status={o.status} label={cashierPending ? 'Bayar di kasir' : o.status_label} />
       </div>
 
-      {o.status === 'pending_payment' && (
+      {o.status === 'pending_payment' && !cashierPending && (
         <Link to={`/orders/${o.code}/pay`} className="mb-3 flex h-12 items-center justify-center rounded-xl bg-primary font-headline font-bold text-on-primary">
           Lanjut bayar
         </Link>
       )}
       {o.status === 'expired' && (
-        <p className="mb-3 rounded-lg bg-error-container p-3 text-xs text-on-error-container">Pesanan kedaluwarsa karena tidak dibayar dalam 15 menit.</p>
+        <p className="mb-3 rounded-lg bg-error-container p-3 text-xs text-on-error-container">
+          {o.payment_method === 'cashier'
+            ? 'Pesanan kedaluwarsa karena tidak discan dan dibayar di kasir tepat waktu.'
+            : 'Pesanan kedaluwarsa karena tidak dibayar dalam 15 menit.'}
+        </p>
+      )}
+
+      {cashierPending && (
+        <div className="mb-3 rounded-2xl bg-secondary-fixed p-4 text-center" data-testid="cashier-banner">
+          <p className="text-xs text-on-surface-variant">Bayar di kasir</p>
+          <p className="font-headline text-2xl font-extrabold">{rupiah(o.total)}</p>
+          <p className="mt-1 text-xs">
+            Datang ke restoran dan bayar sebelum <Countdown expiresAt={o.expires_at} onExpire={() => q.refetch()} />
+          </p>
+        </div>
       )}
 
       {idx >= 0 && (
@@ -80,9 +98,11 @@ export default function OrderDetail() {
         </ol>
       )}
 
-      {o.status === 'paid' && o.qr_token && (
+      {showQr && o.qr_token && (
         <div className="mb-3 rounded-2xl bg-surface-container-lowest p-5 text-center shadow-sm">
-          <p className="mb-3 text-sm font-semibold">Tunjukkan QR ini ke kasir</p>
+          <p className="mb-3 text-sm font-semibold">
+            {cashierPending ? 'Tunjukkan QR ini ke kasir untuk bayar dan memesan' : 'Tunjukkan QR ini ke kasir'}
+          </p>
           <div className="mx-auto flex w-fit rounded-xl bg-white p-3">
             <QRCodeSVG value={o.qr_token} size={208} level="M" />
           </div>
@@ -99,7 +119,7 @@ export default function OrderDetail() {
           )}
         </div>
       )}
-      {o.status === 'paid' && o.estimate_minutes === null && (
+      {(o.status === 'paid' || cashierPending) && o.estimate_minutes === null && (
         <p className="mb-3 text-center text-xs text-on-surface-variant">Estimasi muncul setelah QR discan kasir.</p>
       )}
 

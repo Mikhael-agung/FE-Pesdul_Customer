@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { Countdown } from "../components/Countdown";
@@ -15,7 +15,7 @@ export default function Pay() {
   const qc = useQueryClient();
   const order = useOrder(code);
   const pending = order.data?.status === "pending_payment";
-  const status = usePaymentStatus(code, !!pending);
+  const status = usePaymentStatus(code, !!pending && order.data?.payment_method !== "cashier");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -37,6 +37,7 @@ export default function Pay() {
     );
 
   const o = order.data;
+  if(o.payment_method === "cashier") return <Navigate to={`/orders/${code}`} replace />;
   const pay = status.data?.payment ?? o.payment;
 
   if (o.status === "expired")

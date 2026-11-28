@@ -14,7 +14,7 @@ export function Splash({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (phase === 'done') return;
-        const t1 = setTimeout(() => setPhase('fade'), 5600);
+        const t1 = setTimeout(() => setPhase('fade'), 1500);
         const t2 = setTimeout(() => {
             try {
                 sessionStorage.setItem(KEY, '1');

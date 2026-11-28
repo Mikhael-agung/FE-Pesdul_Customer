@@ -39,9 +39,20 @@ export type Payment = {
     expires_at: string;
 };
 
+export type PaymentMethod ='qris' | 'cashier' | 'va';
+
+export type PaymentMethodInfo = {id: PaymentMethod; label: string; enabled: boolean};
+
+export type PublicSettings = {
+    dine_in_full: boolean;
+    payment_methods: PaymentMethodInfo[];
+};
+
 export type Order = {
     code: string;
     order_type: OrderType;
+    payment_method: PaymentMethod | null;
+    staus: OrderStatus;
     status: OrderStatus;
     status_label: string;
     total: number;
@@ -58,6 +69,6 @@ export type Order = {
 export type OrderSummary = Pick<
     Order,
     'code' | 'status' | 'status_label' | 'order_type' | 'total' | 'created_at'
->;
+> & {payment_method?: PaymentMethod | null};
 
 export type PageMeta = { current_page: number; per_page: number; total: number; last_page: number };

@@ -52,7 +52,6 @@ export type Order = {
     code: string;
     order_type: OrderType;
     payment_method: PaymentMethod | null;
-    staus: OrderStatus;
     status: OrderStatus;
     status_label: string;
     total: number;

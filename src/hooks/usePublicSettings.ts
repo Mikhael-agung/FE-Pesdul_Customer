@@ -11,9 +11,11 @@ export const usePublicSettings = () => {
         queryFn: async () => (await api.get('/settings/public')).data.data as PublicSettings,
         staleTime: 60_000,
     });
+    const ready = q.isSuccess;
     return {
         ...q,
+        ready,
         dineInFull: q.data?.dine_in_full ?? false,
-        methods: q.data?.payment_methods ?? DEFAULT_METHODS,
+        methods: ready ? (q.data?.payment_methods ?? DEFAULT_METHODS) : [],
     };
 };

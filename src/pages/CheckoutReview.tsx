@@ -19,7 +19,7 @@ export default function CheckoutReview() {
   const qc = useQueryClient();
   const [err, setErr] = useState<{ message: string; code?: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const { methods } = usePublicSettings();
+  const {methods, ready: settingsReady, isError: settingsError, refetch: refetchSettings} = usePublicSettings();
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const lock = useRef(false); // BE tidak menangani dobel klik
   const placed = useRef(false); // pesanan sudah dibuat: jangan jalankan guard keranjang kosong
@@ -34,7 +34,7 @@ export default function CheckoutReview() {
   if (!orderType) return <Navigate to="/checkout/type" replace />;
 
   const pay = async () => {
-    if (lock.current || !chosen) return;
+    if (lock.current || !settingsReady || !chosen) return;
     lock.current = true;
     setBusy(true);
     setErr(null);
@@ -91,6 +91,20 @@ export default function CheckoutReview() {
       </ul>
 
       <h2 className="mb-2 font-headline text-base font-bold">Metode pembayaran</h2>
+      {!settingsReady && (
+        <div className="mb-3 rounded-2xl bg-surface-container-lowest p-4 text-sm shadow-sm" aria-busy={!settingsError}>
+          {settingsError ? (
+            <>
+              <p className="mb-2 text-on-error-container">Gagal memuat metode pembayaran.</p>
+              <button type="button" onClick={() => refetchSettings()} className="font-bold text-primary underline">
+                Coba lagi
+              </button>
+            </>
+          ) : (
+            <p className="text-on-surface-variant">Memuat metode pembayaran...</p>
+          )}
+        </div>
+      )}
       <div role="radiogroup" aria-label="Metode pembayaran" className="mb-3 flex flex-col gap-2">
         {methods.map((m) => {
           const meta = METHOD_META[m.id];
@@ -134,7 +148,7 @@ export default function CheckoutReview() {
 
       <button
         onClick={pay}
-        disabled={busy || !chosen}
+        disabled={busy || !settingsReady || !chosen}
         className="flex h-12 w-full items-center justify-center rounded-xl bg-primary font-headline font-bold text-on-primary shadow-md disabled:opacity-60"
       >
         {busy
